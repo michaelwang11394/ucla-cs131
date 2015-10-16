@@ -30,22 +30,29 @@ let awkish_grammar =
 	 [[T"0"]; [T"1"]; [T"2"]; [T"3"]; [T"4"];
 	  [T"5"]; [T"6"]; [T"7"]; [T"8"]; [T"9"]])
 
-let mytest0 =
-  get_rhs awkish_grammar Num;;
-
-let mytest1 = 
-  traverse awkish_grammar Expr 1;;
-
 (*
 let test0 =
-  ((parse_prefix awkish_grammar accept_all ["ouch"]) = None)
+  (
+    (parse_prefix awkish_grammar accept_all ["ouch"])
+  )
+
+let test1 =
+  (
+    (parse_prefix awkish_grammar accept_all ["9"])
+  )
+
+let test2 =
+  (
+    (parse_prefix awkish_grammar accept_all ["4"; "+"; "$"; "1"; "+"])
+  )
 *)
 
-(*
+let test0 =
+  ((parse_prefix awkish_grammar accept_all ["ouch"]) = None)
+
 let test1 =
   ((parse_prefix awkish_grammar accept_all ["9"])
    = Some ([(Expr, [N Term]); (Term, [N Num]); (Num, [T "9"])], []))
-
 
 let test2 =
   ((parse_prefix awkish_grammar accept_all ["9"; "+"; "$"; "1"; "+"])
@@ -55,9 +62,7 @@ let test2 =
 	 (Lvalue, [T "$"; N Expr]); (Expr, [N Term]); (Term, [N Num]);
 	 (Num, [T "1"])],
 	["+"]))
-*)
 
-(*
 let test3 =
   ((parse_prefix awkish_grammar accept_empty_suffix ["9"; "+"; "$"; "1"; "+"])
    = None)
@@ -125,5 +130,3 @@ let test5 =
       ([(Expr, [N Term; N Binop; N Expr]); (Term, [N Num]); (Num, [T "3"]);
 	(Binop, [T "-"]); (Expr, [N Term]); (Term, [N Num]); (Num, [T "4"])],
        ["+"; "$"; "5"; "-"; "6"]))
-
-*)
