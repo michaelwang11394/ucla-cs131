@@ -15,29 +15,29 @@ let rec traverse grammar start_symbol depth =
 *)
 
 
-let rec make_appended_matchers other_rules rule acceptor frag result = 
+let rec make_appended_matchers all_rules rule acceptor frag result = 
   match rule with 
     | [] -> acceptor result frag
-    | rulehead :: ruletail -> 
-      (match rulehead with 
+    | rule_head :: rule_tail -> 
+      (match rule_head with 
         | T(terminal) -> 
           (match frag with 
             | [] -> None
-            | fraghead :: fragtail -> 
-              (if (fraghead = terminal) then 
-                (make_appended_matchers other_rules ruletail acceptor fragtail result)
+            | frag_head :: frag_tail -> 
+              (if (frag_head = terminal) then 
+                (make_appended_matchers all_rules rule_tail acceptor frag_tail result)
               else
                 None)
           )
-        | N(nonterminal) -> (make_or_matchers other_rules acceptor frag result)
+        | N(nonterminal) -> (make_or_matchers all_rules (all_rules nonterminal) acceptor frag result)
       )
 
-and make_or_matchers matching_rules acceptor frag result = 
+and make_or_matchers all_rules matching_rules acceptor frag result = 
   match matching_rules with
     | [] -> None
-    | head :: tail -> 
-      (match make_appended_matchers tail head acceptor frag result with
-        | None -> make_or_matchers tail acceptor frag result
+    | rules_head :: rules_tail -> 
+      (match make_appended_matchers all_rules rules_head acceptor frag result with
+        | None -> make_or_matchers all_rules rules_tail acceptor frag result
         | any -> any 
       )
 
