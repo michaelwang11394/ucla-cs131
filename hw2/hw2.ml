@@ -1,5 +1,24 @@
 type ('n, 't) symbol = N of 'n | T of 't
 
+(* Warmup problem *)
+
+let rec find_matching rules lhs =
+  match rules with
+    | [] -> []
+    | head :: tail -> 
+      (
+        if ((fst head) = lhs) then
+          (snd head) :: (find_matching tail lhs)
+        else
+          find_matching tail lhs
+      )
+
+let convert_grammar hw1_grammar = 
+  match hw1_grammar with
+    | (start_sym, rules) -> (start_sym, (fun x -> (find_matching rules x)))
+
+(* Actual problem *)
+
 (*
   make_append_matchers tries to tackle "rule concatenation" as mentioned in class;
     Given a rule and fragments, check if this rule is applicable according to acceptor
@@ -73,6 +92,8 @@ let rec make_appended_matchers all_rules rule acceptor derivation frag =
   @return:
     Some ([(lhs1, rhs12); (lhs2, rhs22)...], [term1; term2...]) | None
     Whatever the 'and' function returns; None if no rules are applicable.
+
+  need to use 'and' and not 'rec' as the 'and', 'or' functions are mutual recursive
 *)
 and make_or_matchers all_rules matching_rules lhs acceptor frag derivation = 
   match matching_rules with
@@ -86,7 +107,7 @@ and make_or_matchers all_rules matching_rules lhs acceptor frag derivation =
       )
 
 (*
- parse_prefix is the program entry; its semantic is similar with make_or_matchers
+ parse_prefix is the program entry; its semantic is similar with make_or_matchers, and we can call 'or' for the given starting symbol in the grammar
 *)
 let parse_prefix grammar acceptor frag = 
   match grammar with
