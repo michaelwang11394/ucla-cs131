@@ -20,4 +20,6 @@ setup.data
 setup.log
 
 # CS 131 summary text files
-hw*.txt
+#hw*.txt
+
+.DS_Store

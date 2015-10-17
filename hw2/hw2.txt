@@ -1,0 +1,68 @@
+This summary describes the process of solving the homework 2 problems.
+
+ --- Grammar conversion (warmup) problem ---
+
+Think in terms of the conversion function signature: 
+The input is (start_sym, [[lhs1, rhs1]; [lhs1, rhs2]...])
+The output is (start_sym, fun x -> [rhs1, rhs2...])
+We need to construct the second item in the output pair, which comes from matching the parameter x with the lhs of all the rules from the input.
+Building recursion with this idea solves the problem.
+
+ --- Parser generator (main) problem ---
+
+The parser generator we provided is a top-down, left-to-right, (depth-first) parser generator, which seems to behave correctly for non-left recursion CFGs.
+
+This problem is difficult in the following aspects, which are covered in the following paragraphs:
+ * Understanding the problem
+ * Design 
+ * Implementation
+ * Test and evaluation
+
+** Understanding the problem
+In this phase, tips like
+ 1) We are writing a parser generator for arbitrary CFGs, not a specific parser;
+ 2) Acceptor implementation has nothing to do with the parser generator; the only relationship is the generator tries the next alternative if this one is rejected.
+ 3) Given 2), the generator does not prefer to generate a parser that gives full derivation. The derivation's good as long as it's accepted
+ 4) Alternatives rules should be applied sequentially. First derivation that got accepted should be the output.
+helped.
+
+** Design
+Initial thoughts suggested that this problem consists of multiple recursions. And the key is to figure out what the recursive components are, what goals they should achieve, and as a consequence what their function signatures should look like and what the internal implementation should be.
+
+Some amount of time was spent on approaches that we did not end up taking (For example, fragments traversal based approach). Here we focus on the design of the approach that's presented in the solution. 
+
+High level ideas that inspired this solution is from Oct 9 Lab and Oct 14 class. From the former: the (append_matcher m1 m2 ...), which uses (match m2 ...) as (match m1)'s acceptor is a helpful idea. From the latter, prof. Eggert described the functional components as matcher concatenation, alternative application, and backtracking; which is reflected in the design. 
+
+Thus we have the basic components fleshed out, and try to sketch out the function signatures:
+ * ('and') rule -> frag -> acceptor -> whatever acceptor returns | None
+ * ('or') rules -> frag -> acceptor -> whatever acceptor returns | None
+ * ('entrance') (start_symbol, rules) -> frag -> acceptor -> whatever acceptor returns | None
+ (These are initial thoughts, and final signatures are commented in the code)
+
+Then we figure out the logic of each component:
+ * ('and'): recursively match the next in frag with the next symbol in rule; Use '=' if next in rule is terminal; go down one level and try all alternatives('or') if next in rule is non-terminal; calls acceptor and return its return value when the rule is depleted, otherwise keep executing until frag is depleted.
+ * ('or'): try out the alternatives in 'rules' sequentially; for each rule, try 'and'; returns what 'and' returns if 'and' is accepted; try the next alternative if 'and' returns None. Returns None if no alternatives are left.
+ * ('entrance'): has a similar signature with 'or', as we are given a start symbol and a set of alternatives; thus we call 'or' and return what it returns.
+
+The initial design is described above, and problems were discovered during implementaion.
+
+** Implementation
+Updates in implementation phase include:
+ * Function signature update 
+ For example, 'and' wants to call 'or' with its non terminal symbols, the set of rhs's that applies for that non terminal symbol; Thus 'or' should take a starting symbol, applicable rhs's, and give these to 'and', as well as the whole produciton function. Also, we want to store the rules used, so 'or' should take the lhs of the current applicable rules as well. 
+ * Recursion logic/condition
+ One problem was that the generator only applies the first rule for the first symbol, even if that rule has 'non-epsilon-able' follow ups. This is a problem of matcher concatenation: in 'and' when calling 'or', if we want to use this alternative, we have to state that the rule symbols after the current 'and' match point has to match. This is achieved by using the appended matcher as the acceptor of the previous matcher.
+ * Type checking, and other implementation issues also took time.
+
+** Test and evaluation
+We added two simple languages of boolean to test out parser generator behavior in 
+ * Case with blind alley rules
+ * Case with ambiguous grammar vs unambiguous
+ * Case with epsilon production rule
+The generator behaves as expected in these simple cases.
+Limitations:
+ * The generated parser is top-down, left-to-right, (and depth-first), thus cannot handle left recursion: N -> NS would cause itself to be applied recursively with no terminal symbols resolved. Similarly, indirect left recursions like N -> At, A -> Na would also cause stack overflow.
+ * Also, the generated parser is considered inefficient, which is common in  designs that involve backtracking (whose time complexity is hard to evaluate in most cases). Efficiency is usually gained by introducing premises in the language; for example, LL(1); lookaheads, first() set, and backtracking removal.
+
+
+As a random side note, the 30-line naive parser generator really demonstrated the elegance of functional programming and recursion.

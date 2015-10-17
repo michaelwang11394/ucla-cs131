@@ -1,0 +1,31 @@
+This summary briefly describes the process of solving the homework problems, with a few gists highlighted.
+
+Warmup problems:
+
+1) set problems: subset, equal_sets, etc depend on the implementation of "item belongs to set", which can be implemented easily using recursion in OCaml; Its current implementation has a O(mn) complexity, in which m and n are the numbers of elements in the two sets; 
+Probablistic based methods and more complicated data structures (for example, Bloom Filters) can be introduced for lowering the time complexity, which is not a primary concern in this case.
+Specifically for the equal_sets function, two sets A and B are equal if they are each other's subset.
+
+2) fixed_point problems: computed_fixed_point can be calculated using recursion. One weakness in the implementation is that it does not have a stopping point; as fixed points may not exist for a given starting point and given function. 
+Periodic fixed point problems is similar with computed fixed point; with the difference being that a series of starting points (x, fx, ffx, fffx...) should be taken into consideration. The implementation has a similar weakness as computed fixed point problem, however, given the functionality requirements of filter_blind_alleys, we won't resolve this issue for now.
+A special edge case that's worth noting for periodic fixed point is when p = 0.
+
+Filter blind alley problem:
+
+During the design phase, I considered the following approaches
+1) For the given starting point, build a tree (depth first) that applies all rules that can apply for each node, with each node representing either a terminal or a non-terminal symbol; each time new non-terminal node is added, try to record that node in a list; if it already exists, abort the application of this rule and go upper one level and try the next possible rule. Finishes when no next possible rules are applicable. Do another scan of the tree afterwards, leaf nodes representing non-terminal symbols would be caused by blind alley rules; and rules resulting in these symbols would be blind alley
+
+I did not go ahead with this design, as it would be hard to map a functional language program to this design; and more importantly, the backtracing in the idea is unnecessary for this problem. The basic ideas of 1) evolved into 
+2) For all the given rules, find all non-terminal symbols that can be directly mapped to terminal symbols. Rules with the above said non-terminals as rhs are not blind alleys. The problem here would be to design the recursive process to decide whether a rule can eventually lead to terminal-only symbols. I spent some efforts designing the recursion, and eventually came up with 
+
+3) The idea is to iterate through the rules sequentially in several passes, and each pass tries to figure out more "terminable non-terminal symbols" (those that can be mapped to a collection of terminable non-terminal symbols and terminal symbols) with the resulting terminable symbols from the last pass. The recursion ends when one pass does not generate more terminable symbols, and then the rules whose rhs do not consist entirely of terminable symbols would be blind alleys.
+
+This idea utilizes computed_fixed_point as the recursion's end condition. With a carefully designed interface, 
+- next_pass(set of terminable symbols) = (set of terminable symbols) 
+is the end condition. We do not need to worry about recursion never ending in this case, as the total ammount of (terminable) symbols is limited; and one final pass can be applied afterwards to filter out the blind alleys and return the rules in original order.
+
+Implementation took long after figuring out the approach, as the majority of the time was spent upon debugging, especially the "type enforcement" in OCaml; for example, line 72 used to be 
+ - if is_symbol_terminal h || symbol_terminable h termiable_symbols, with the latter function implementing what it's doing now in line 66.
+The problem with that implementation, is that unlike C, where the second condition in an or is not cared about as long as the first one is true, here the second condition should also satisfy the type requirement, which would cause string items to be checked against a list of custom-typed non-terminal symbols. The workaround was implemented after spending lots of time tracing down the problem.
+
+It should be mentioned that the implementation can be simplified, or optimized to check less things, but whether the asymptotic complexity can be lowered is still being considered.
