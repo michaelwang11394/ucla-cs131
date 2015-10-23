@@ -28,8 +28,6 @@ class BetterSorryState implements State {
         AtomicInteger ai = new AtomicInteger(value[i]);
         AtomicInteger aj = new AtomicInteger(value[j]);
 
-        // we want the read and write in this to be atomic; since we have two indices
-        // what about the case "wanting to decrement an i, with it being increment of another thread?"
         value[i] = (byte) ai.getAndDecrement();
         value[j] = (byte) aj.getAndIncrement();
         return true;

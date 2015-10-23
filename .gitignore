@@ -26,4 +26,7 @@ setup.log
 *.class
 *.jar
 
+# OmniGraffle sources
+*.graffle
+
 .DS_Store
