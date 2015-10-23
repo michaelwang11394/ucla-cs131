@@ -22,4 +22,8 @@ setup.log
 # CS 131 summary text files
 #hw*.txt
 
+# hw3 java files
+*.class
+*.jar
+
 .DS_Store
