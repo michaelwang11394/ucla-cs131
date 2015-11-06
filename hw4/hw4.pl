@@ -56,11 +56,11 @@ extract_column([H|T], I, X) :- get_n(H, I, E), extract_column(T, I, Y), append_l
 
 in_domain(X, N) :- fd_domain(X, 1, N).
 
-element_in_domain([], _).
-element_in_domain([H|T], N) :- in_domain(H, N), element_in_domain(T, N).
+list_in_domain([], _).
+list_in_domain([H|T], N) :- in_domain(H, N), list_in_domain(T, N).
 
 all_in_domain([], _).
-all_in_domain([H|T], N) :- element_in_domain(H, N), all_in_domain(T, N).
+all_in_domain([H|T], N) :- list_in_domain(H, N), all_in_domain(T, N).
 
 row_all_distinct([]).
 row_all_distinct([H|T]) :- fd_all_different(H), row_all_distinct(T).
@@ -80,13 +80,23 @@ length_match([H], N) :- length(H, N).
 column_all_distinct(_, 0) :- !.
 column_all_distinct(X, N) :- N1 is N - 1, extract_column(X, N1, T), fd_all_different(T), column_all_distinct(X, N1).
 
-sum_matrix(_, [], 0).
+get_i_j(X, I, J, Y) :- J1 is J - 1, I1 is I - 1, get_n(X, I1, X1), get_n(X1, J1, Y).
+
 /**
  * The sequence of "sum_matrix(X, T, Y1)" and "Y is Y1 + X2" does matter, putting the evaluation first would cause instantiation error
  */
-sum_matrix(X, [I-J|T], Y) :- J1 is J - 1, I1 is I - 1, get_n(X, J1, X1), get_n(X1, I1, X2), sum_matrix(X, T, Y1), Y is Y1 + X2.
+sum_matrix(_, [], 0).
+sum_matrix(X, [I-J|T], Y) :- get_i_j(X, I, J, E), sum_matrix(X, T, Y1), Y is Y1 + E.
+multiply_matrix(_, [], 1).
+multiply_matrix(X, [I-J|T], Y) :- get_i_j(X, I, J, E), multiply_matrix(X, T, Y1), Y is Y1 * E.
+
+minus_matrix(X, I1-J1, I2-J2, Y) :- get_i_j(X, I1, J1, X1), get_i_j(X, I2, J2, X2), Y is X1 - X2.
+divide_matrix(X, I1-J1, I2-J2, Y) :- get_i_j(X, I1, J1, X1), get_i_j(X, I2, J2, X2), Y is X1 / X2.
 
 meet(X, +(Y, [H|T])) :- sum_matrix(X, [H|T], Y).
+meet(X, *(Y, [H|T])) :- multiply_matrix(X, [H|T], Y).
+meet(X, -(Y, P1, P2)) :- minus_matrix(X, P1, P2, Y); minus_matrix(X, P2, P1, Y).
+meet(X, /(Y, P1, P2)) :- divide_matrix(X, P1, P2, Y); minus_matrix(X, P1, P2, Y).
 
 meet_constraints(X, []).
 meet_constraints(X, [H|T]) :- meet(X, H), meet_constraints(X, T).
@@ -99,6 +109,35 @@ kenken(N, C, T) :- length(T, N), length_match(T, N), all_in_domain(T, N), row_al
 sudoku(0, []).
 sudoku(N, X) :- length(X, N), length_match(X, N), all_in_domain(X, N), row_all_distinct(X), column_all_distinct(X, N), maplist(fd_labeling, X).
 
-/*
-N1 is N - 1, extract_column([H|T], N1, Y), is_distinct(Y, [], true), sudoku(N1, T)
-*/
+kenken_testcase(
+  4,
+  [
+   +(6, [1-1, 1-2, 2-1]),
+   *(96, [1-3, 1-4, 2-2, 2-3, 2-4]),
+   -(1, 3-1, 3-2),
+   -(1, 4-1, 4-2),
+   +(8, [3-3, 4-3, 4-4]),
+   *(2, [3-4])
+  ]
+).
+
+kenken_testcase1(
+  6,
+  [
+   +(11, [1-1, 2-1]),
+   /(2, 1-2, 1-3),
+   *(20, [1-4, 2-4]),
+   *(6, [1-5, 1-6, 2-6, 3-6]),
+   -(3, 2-2, 2-3),
+   /(3, 2-5, 3-5),
+   *(240, [3-1, 3-2, 4-1, 4-2]),
+   *(6, [3-3, 3-4]),
+   *(6, [4-3, 5-3]),
+   +(7, [4-4, 5-4, 5-5]),
+   *(30, [4-5, 4-6]),
+   *(6, [5-1, 5-2]),
+   +(9, [5-6, 6-6]),
+   +(8, [6-1, 6-2, 6-3]),
+   /(2, 6-4, 6-5)
+  ]
+).
