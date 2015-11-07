@@ -5,8 +5,8 @@
  *   @param T The result matrix
  *
  * This solution is rather fast: 
- *   Finding all solutions to Example kenken 6 took 4ms, while
- *   Example kenken 4 took 2ms on SEASnet machine
+ *   Finding all solutions to the size 3 example took 1ms, size 4 example took 
+ *   2ms, and size 6 example took 4ms on the SEASnet machine
  *************************************************************************/
 /**
  * Applying fd_domain to every element list of the given list (instead of
@@ -152,8 +152,8 @@ sudoku(N, X) :-
  *   permutation for now
  *
  * This permutation-based solution is really slow:
- *   Finding all solutions to Example 4 took 4.7s on SEASnet machine,
- *   and Example 6 took more than 2 hours.
+ *   Finding all solutions to the size 3 example took 3ms, size 4 example took 
+ *   4.7s, and size 6 example took more than 3 hours on the SEASnet machine.
  *************************************************************************/
 plain_kenken(N, C, T) :- 
   length(T, N), length_match(T, N), get_domain_list(N, R),
@@ -221,7 +221,7 @@ plain_column_all_distinct(X, N, R) :-
     [2,1,3],
     [3,2,1]
   ]
- * And if asked for more, Prolog should say no
+ * And if asked for more, Prolog should say no.
  *
  * If a solution cannot be found for the given size and constraints, Prolog 
  * should just say no.
