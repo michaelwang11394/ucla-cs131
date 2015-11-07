@@ -5,8 +5,8 @@
  *   @param T The result matrix
  *
  * This solution is rather fast: 
- *   Finding all solutions to Example kenken 6 took 7ms, while
- *   Example kenken 4 took 40ms
+ *   Finding all solutions to Example kenken 6 took 4ms, while
+ *   Example kenken 4 took 2ms on SEASnet machine
  *************************************************************************/
 /**
  * Applying fd_domain to every element list of the given list (instead of
@@ -42,9 +42,9 @@ append_list([H|T], X, [H|TX]) :- append_list(T, X, TX).
  * @param index
  * @param element
  */
-get_n([], I, []).
+get_n([], _, []).
 get_n([H|_], 0, H).
-get_n([H|T], I, X) :- I \= 0, N is I - 1, get_n(T, N, X).
+get_n([_|T], I, X) :- I \= 0, N is I - 1, get_n(T, N, X).
 
 /**
  * Extract a column from a given matrix
@@ -52,7 +52,7 @@ get_n([H|T], I, X) :- I \= 0, N is I - 1, get_n(T, N, X).
  * @param column number
  * @param resulting list
  */
-extract_column([], I, []).
+extract_column([], _, []).
 extract_column([H|T], I, X) :- 
   get_n(H, I, E), 
   extract_column(T, I, Y), 
@@ -130,7 +130,7 @@ meet(X, /(Y, P1, P2)) :-
   divide_matrix(X, P1, P2, Y); 
   divide_matrix(X, P2, P1, Y).
 
-meet_constraints(X, []).
+meet_constraints(_, []).
 meet_constraints(X, [H|T]) :- meet(X, H), meet_constraints(X, T).
 
 /**
@@ -152,7 +152,8 @@ sudoku(N, X) :-
  *   permutation for now
  *
  * This permutation-based solution is really slow:
- *   Finding all Solutions to Example 4 took 51s
+ *   Finding all solutions to Example 4 took 4.7s on SEASnet machine,
+ *   and Example 6 took more than 2 hours.
  *************************************************************************/
 plain_kenken(N, C, T) :- 
   length(T, N), length_match(T, N), get_domain_list(N, R),
@@ -161,7 +162,7 @@ plain_kenken(N, C, T) :-
 
 /**
  * Note: the difference between putting append_list(R, [N], R1) and append_list
- * (R1, [N], R) here...why do we have to add length(R, N)?
+ * (R1, [N], R) here...why do we need to enforce length(R, N)?
  */
 get_domain_list(0, _) :- !.
 get_domain_list(N, R) :-
@@ -184,7 +185,53 @@ plain_column_all_distinct(X, N, R) :-
   plain_column_all_distinct(X, N1, R).
 
 /*************************************************************************
+ * KenKen (no-op) - API design
+ *
+ * noop_kenken/4
+ *  (Size, ConstraintCells, OpList, Solution)
+ * @param Size The size of KenKen matrix
+ *   This should be ground terms.
+ * @param ConstraintCells The list of pairs that contains the expected result 
+ *   and constrained cells.
+ *   This should be ground terms.
+ *   For example, [(5, [1-1, 2-2]), (3, [1-2, 2-1, 1-3])]; 
+ *   The second item in the pair, the constrained list, will be considered for 
+ *   subtraction and division, if it has two elements, otherwise it is only
+ *   considered for multiplication and addition.
+ * @param OpList The list of operators to apply on each constrained cells
+ *   For example, [+, *]
+ * @param Solution A solution matrix for the given KenKen constraints
+ *
+ * The naive difference from our existing KenKen, is that operators enumeration
+ * should be represented in our meet_constraints predicate.
+ * 
+ * An example call would look like:
+
+  noop_kenken(3, 
+    [(5, [1-1, 1-2, 2-2]),
+     (1, [3-3, 2-1]),
+     (8, [1-2, 1-3, 2-3]),
+     (1, [1-1, 2-2, 3-3])],
+    OPS, T).
+ 
+ * This should give:
+  OPS = [+,-,+,*]
+  T = [
+    [1,3,2],
+    [2,1,3],
+    [3,2,1]
+  ]
+ * And if asked for more, Prolog should say no
+ *
+ * If a solution cannot be found for the given size and constraints, Prolog 
+ * should just say no.
+ *************************************************************************/
+
+/*************************************************************************
  * KenKen built-in test cases
+ * The shell command for running test on SEASnet machine:
+echo "a" | nohup gprolog --consult-file hw4.pl --query-goal "statistics(cpu_time, V) zhehao_kenken_testcase1(N, C), plain_kenken(N, C, T)" &
+ * to test 6 * 6 plain KenKen since it takes too long.
  *************************************************************************/
 zhehao_kenken_testcase(
   4,
@@ -216,5 +263,22 @@ zhehao_kenken_testcase1(
    +(9, [5-6, 6-6]),
    +(8, [6-1, 6-2, 6-3]),
    /(2, 6-4, 6-5)
+  ]
+).
+
+zhehao_kenken_testcase2(
+  6,
+  [
+   +(12, [1-1, 1-2, 2-1, 3-2, 4-6]),
+   -(2, 3-3, 5-5),
+   *(24, [2-3, 3-3])
+  ]
+).
+
+zhehao_kenken_testcase3(
+  3,
+  [
+   +(5, [1-1, 1-2, 2-2]),
+   -(1, 3-3, 2-1)
   ]
 ).
