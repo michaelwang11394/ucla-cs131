@@ -1,6 +1,7 @@
 #!r6rs
 (import (rnrs eval (6))
-        (rnrs base (6)))
+        (rnrs base (6))
+        (rnrs io simple (6)))
 
 (define returnlist4
   (lambda(a b c d) 
@@ -166,7 +167,7 @@
       #f))
 )
 
-(test-compare-expr test-x test-y)
+(display (test-compare-expr test-x test-y))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; The compare-expr of test-x and test-y gives:
