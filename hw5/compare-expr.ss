@@ -6,7 +6,9 @@
 ;   Loading with "racket < compare-expr.ss" would cause problem; 
 ;   While loading with (load "compare-expr.ss") is fine, but does not output anything even with display function added;
 ;   Loading with the GUI DrRacket is fine, and adding display would display properly;
-;   To add print debugging, include (rnrs io simple (6))
+;   To add print debugging, include (rnrs io simple (6));
+;
+;   Or alternatively, comment out the import and #!r6rs, and run unit test cases instead of evaluation tests (need to remove if/2 from unit tests if taken this approach)...
 
 ; Constructs the list with 'if 'TCP 'execution-1 'execution-2
 (define returnlist4
