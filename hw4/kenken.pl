@@ -144,7 +144,7 @@ sudoku(N, X) :-
   maplist(fd_labeling, X).
 
 /*************************************************************************
- * KenKen (plain) - kenken/3
+ * KenKen (plain) - plain_kenken/3
  * KenKen (plain) does not use fd_domain, fd_all_different, and fd_labeling
  *   The idea is to use permutations of int list instead of fd_domain
  *   Interesting note though, perm in class can check if something is a perm 
