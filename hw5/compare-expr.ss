@@ -1,14 +1,18 @@
-#!r6rs
-(import (rnrs eval (6))
-        (rnrs base (6)))
+; #!r6rs
+; (import (rnrs eval (6))
+;         (rnrs base (6)))
 
-; How to run:
+; How to run (with !r6rs):
+;   To test if/3 vs if/2, toggle the last commented line in test-y definition, and use the form with 'environment' in the evaluation function
 ;   Loading with "racket < compare-expr.ss" would cause problem; 
 ;   While loading with (load "compare-expr.ss") is fine, but does not output anything even with display function added;
-;   Loading with the GUI DrRacket is fine, and adding display would display properly;
+;   Loading with the GUI DrRacket is fine, and adding display would display properly; (Recommended way to test, if applicable)
 ;   To add print debugging, include (rnrs io simple (6));
 ;
-;   Or alternatively, comment out the import and #!r6rs, and run unit test cases instead of evaluation tests (need to remove if/2 from unit tests if taken this approach)...
+; Or alternatively, 
+;   Leave the import and #!r6rs as commented, and run unit test cases or evaluation tests
+;   As commented below, current evaluation test comments out the if/2 vs if/3 comparison, 
+;   and current evaluation function comments out the 'environment' in eval, thus this should work without r6rs as is
 
 ; Constructs the list with 'if 'TCP 'execution-1 'execution-2
 (define returnlist4
@@ -70,7 +74,7 @@
     (compare-expr-constant x y))
 )
 
-; This will only compare when both are (if x y z) or (if x y), and won't compare (if x y z) with (if x y)
+; This will only compare when both are (if x y z) or (if x y), and won't compare (if x y z) with (if x y) because they are of different lengths
 ; Turns out that both side 'if does not require special handling, other than what's already in compare-expr-list
 ;(define (compare-expr-if x y)
 ;  (compare-expr-list x y)
@@ -134,18 +138,22 @@
           (if #t (let ((d 13)) (+ d 15)) 27)
           ; tests ordinary function calls and quoted lists
           (car (cons 21 (cons 3 '(45 78)))))
-      ; tests one side with if and the other side with an arbitrary function call
-      (let ((a #t)) (if a 34)))
+      ; tests one side with built-in function and the other side with an arbitrary function call
+      ; this uses if/2 by default, which is not supported as is; recommend toggle comments between the following two lines if playing with r6rs
+      ;(let ((a #t)) (if a 34)))
+      (let ((a #t)) (let ((a 34)) a)))
     (cons
       (if #f
         ; tests lambdas with different formals
+        ; different formal orders treated as completely different, per my question on piazza
         ((lambda (x y) (+ y x)) 1 2)
         ; tests let bindings with different formals
         (let ((x 2) (y 3)) (+ x y)))
       (cons
         ; tests quoted lists
         '(if #f 2 3)
-        ; tests if/2 vs if/3
+        ; tests if/2 vs if/3; 
+        ; Toggle comments in test-y when if/2 is supported, for example, in r6rs
         (if #t '(23) '(14)))))
 )
 
@@ -164,7 +172,8 @@
         (let ((y 3) (x 2)) (+ x y)))
       (cons
         (if #f 2 3)
-        (if #t '(23)))))
+        ;(if #t '(23)))))
+        (if #t '(23) '()))))
 )
 
 ; Create evaluatable list with TCP let bindings
@@ -177,7 +186,9 @@
 ; Note: The evaluation may throw exceptions, which are not caught in this case,
 ;   since the assignment states that "Your prototype need not check that its inputs are valid"
 (define (evaluate x)
-  (eval x (environment '(rnrs)))
+  ; Use the form with 'environment' when r6rs is included
+  (eval x)
+  ;(eval x (environment '(rnrs)))
 )
 
 ; Compare function: if test-x and test-y are evaluatable, 
@@ -200,6 +211,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; The compare-expr of test-x and test-y gives:
+;   Note that this is the test result when given the last if/2 vs if/3 comparisons
+;   Current tests comment this comparison, as if/2 need !r6rs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; (equal? (compare-expr test-x test-y)
@@ -220,7 +233,6 @@
 ;     (if TCP (if #t '(23) '(14)) (if #t '(23))))))
 
 ; )
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Unit test cases:
