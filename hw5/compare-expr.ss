@@ -2,16 +2,20 @@
 (import (rnrs eval (6))
         (rnrs base (6)))
 
+; How to run:
+;   Loading with "racket < compare-expr.ss" would cause problem; 
+;   While loading with (load "compare-expr.ss") is fine, but does not output anything even with display function added;
+;   Loading with the GUI DrRacket is fine, and adding display would display properly;
+;   To add print debugging, include (rnrs io simple (6))
+
+; Constructs the list with 'if 'TCP 'execution-1 'execution-2
 (define returnlist4
   (lambda(a b c d) 
     (cons a (cons b (cons c (cons d '()))))
 ))
 
-(define returnlist1
-  (lambda(a)
-    (cons a '())
-))
-
+; Comparison function for constant items, 
+; handles numeric and boolean constants, quoted lists, and all things that should be treated as completely different
 (define compare-expr-constant
   (lambda (x y)
     (if (equal? x y) 
@@ -23,17 +27,31 @@
           (returnlist4 'if 'TCP x y))))
 ))
 
+; Comparison function for lists of the same length, 
+; this is used when we need to handle each element in the list recursively, instead of just treating the whole list as different
+(define compare-expr-list
+  (lambda (x y)
+    (if (equal? x '()) 
+      '() 
+      (if (equal? y '()) 
+        '() 
+        (cons (compare-expr (car x) (car y)) (compare-expr-list (cdr x) (cdr y)))))
+))
+
+; Wrapper function for quote handling
 (define (compare-expr-quote x y)
   (compare-expr-constant x y)
 )
 
-; If the lambdas has the same formal, we compare their body as lists; if not functions are treated as completely different
+; Lambda handling
+; If the lambdas has the same formal, we compare their body as lists; if not lambdas are treated as completely different
 (define (compare-expr-lambda x y)
   (if (equal? (car (cdr x)) (car (cdr y)))
     (compare-expr-list x y)
     (compare-expr-constant x y))
 )
 
+; Check if let binds the same ordered list of variables by tail recursion, we don't care about the values in this case
 (define (let-binding-same-variables x y)
   (if (and (equal? x '()) (equal? y '()))
     #t
@@ -42,6 +60,7 @@
       #f))
 )
 
+; Let handling
 ; If the lets are binding the same variables, we compare their body as lists; if not functions are treated as completely different
 (define (compare-expr-let x y)
   (if (let-binding-same-variables (car (cdr x)) (car (cdr y)))
@@ -55,7 +74,8 @@
 ;  (compare-expr-list x y)
 ;)
 
-; We are calling different functions on both sides, if one side contains a 'if, 'quote, 'let or 'lambda, we should treat both lists as completely different
+; Check if at least one side's calling a built-in function, when different functions are called on both sides
+; Built-in functions: 'if, 'quote, 'let or 'lambda; Upon returning true, we should treat both lists as completely different
 (define (builtin-function-on-either-side x y)
   (if (or (equal? (car x) 'if) (equal? (car y) 'if))
     #t
@@ -68,6 +88,18 @@
           #f))))
 )
 
+; Body function, check two lists by tail recursion; Logic:
+; For each element, 
+;   if both sides are list, check if lengths match; 
+;      if so check if both sides are calling the same functions 
+;          if so check if that function's one of the built-in functions ('let, 'quote, 'lambda)
+;              if so, handle it accordingly
+;              if not, handle as ordinary list function call
+;          if not check if at least one side's calling a built-in function
+;              if so, treat both as completely different
+;              if not, handle as ordinary list function call
+;      if not match as constants
+;   if at least one side's a literal, match as constants
 (define (compare-expr x y)
   (if (and (list? x) (list? y))
     (if (equal? (length x) (length y))
@@ -86,15 +118,7 @@
     (compare-expr-constant x y))
 )
 
-(define compare-expr-list
-  (lambda (x y)
-    (if (equal? x '()) 
-      '() 
-      (if (equal? y '()) 
-        '() 
-        (cons (compare-expr (car x) (car y)) (compare-expr-list (cdr x) (cdr y)))))
-))
-
+; Whole test case, test purposes commented below
 (define test-x
   '(cons
     (+
@@ -141,6 +165,7 @@
         (if #t '(23)))))
 )
 
+; Create evaluatable list with TCP let bindings
 (define (build-evaluation-list x bool)
   (if bool
     (cons 'let (cons '((TCP #t)) (cons x '())))
@@ -148,11 +173,14 @@
 )
 
 ; Note: The evaluation may throw exceptions, which are not caught in this case,
-; since the assignment states that "Your prototype need not check that its inputs are valid"
+;   since the assignment states that "Your prototype need not check that its inputs are valid"
 (define (evaluate x)
   (eval x (environment '(rnrs)))
 )
 
+; Compare function: if test-x and test-y are evaluatable, 
+;   TCP #t evaluated the same as test-x, and TCP #f evaluated the same as test-y
+;   return #t; else return #f
 (define (test-compare-expr x y)
   (let ((result (compare-expr x y)))
     (if (and
