@@ -207,6 +207,7 @@
       #f))
 )
 
+; Calls the test-compare-expr with built in test cases
 (test-compare-expr test-x test-y)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
