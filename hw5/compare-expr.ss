@@ -164,7 +164,7 @@
         (if a c b))
           #f
           (if #t (let ((d 14)) (+ d 15)) 27)
-          (car (cons 2 (cons 3 '(2 3)))))
+          (car (cons 2 (cons 3 '(45 3)))))
       (let ((a 40)) (- a 34)))
     (cons
       (if #t
@@ -222,7 +222,7 @@
 ;    ((lambda (a b c) (if a (if TCP b c) (if TCP c b)))
 ;     TCP
 ;     (if #t (let ((d (if TCP 13 14))) (+ d 15)) 27)
-;     (car (cons (if TCP 21 2) (cons 3 (if TCP '(45 78) '(2 3))))))
+;     (car (cons (if TCP 21 2) (cons 3 (if TCP '(45 78) '(45 3))))))
 ;    (let ((a (if TCP #t 40))) (if TCP (if a 34) (- a 34))))
 ;   (cons
 ;    (if (not TCP)
@@ -289,6 +289,15 @@
 ; (compare-expr '(quote (if x y z)) 
 ;               '(g (if x y z) 20))
 ;               '(if TCP '(if x y z) (g (if x y z) 20)))
+
+; (equal?
+; (compare-expr ''(if x y z) 
+;               ''(g x y z))
+;               '(if TCP '(if x y z) '(g x y z)))
+; (equal?
+; (compare-expr ''(if x y z) 
+;               '''(g x y z))
+;               '(if TCP '(if x y z) ''(g x y z)))
 
 ; (equal?
 ; (compare-expr '((lambda (a) (f a)) 1) 
