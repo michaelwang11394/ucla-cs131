@@ -1,16 +1,15 @@
+import time
+import logging
+import sys
+import json
+
 from twisted.internet import reactor, protocol
 from twisted.protocols.basic import LineReceiver
 from twisted.python import log
 from twisted.web.client import getPage
 from twisted.application import service, internet
 
-import time
-import datetime
-import logging
-import re
-import sys
-import json
-
+# Global Google API setup
 GOOGLE_PLACE_API_KEY = "AIzaSyDfbd9R06aZ304FMrqYD34sMrVKMrepv6E"
 GOOGLE_PLACE_API_PREFIX = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
 
@@ -49,11 +48,11 @@ class ProxyServerProtocol(LineReceiver):
       return
 
     if (components[0] == "IAMAT"):
-      self.processIAMAT(line)
+      self.processIamAt(line)
     elif (components[0] == "WHATSAT"):
-      self.processWHATSAT(line)
+      self.processWhatsAt(line)
     elif (components[0] == "AT"):
-      self.processAT(line)
+      self.processAt(line)
     else:
       self.commandFailed(line)
     return
@@ -63,7 +62,7 @@ class ProxyServerProtocol(LineReceiver):
     self.transport.write("? " + line + "\n")
     return
 
-  def processIAMAT(self, line):
+  def processIamAt(self, line):
     components = line.split()
     if len(components) != 4:
       self.commandFailed(line)
@@ -72,8 +71,12 @@ class ProxyServerProtocol(LineReceiver):
     clientId = components[1]
     clientPos = components[2]
     clientTime = components[3]
-
-    timeDiff = time.time() - float(clientTime)
+    
+    try:
+      timeDiff = time.time() - float(clientTime)
+    except Exception, e:
+      self.commandFailed(line, "IAMAT: Invalid input parameter")
+      return
 
     if timeDiff >= 0:
       response = "AT {0} +{1} {2}".format(self.factory.serverName, timeDiff, ' '.join(components[1:]))
@@ -92,15 +95,19 @@ class ProxyServerProtocol(LineReceiver):
     # Consideration of on-demand location query propagation, or servers sync'ed all the time
     self.propagate(response)
 
-  def processWHATSAT(self, line):
+  def processWhatsAt(self, line):
     components = line.split()
     if len(components) != 4:
       self.commandFailed(line)
       return
     
     clientId = components[1]
-    radius = int(components[2])
-    upperBound = int(components[3])
+    try:
+      radius = int(components[2])
+      upperBound = int(components[3])
+    except Exception, e:
+      self.commandFailed(line, "WHATSAT: Invalid input parameter")
+      return
 
     if radius > 50 or upperBound > 20:
       self.commandFailed(line, "WHATSAT: range or item limit exceeded.")
@@ -126,7 +133,7 @@ class ProxyServerProtocol(LineReceiver):
       #  http://stackoverflow.com/questions/173687/is-it-possible-to-pass-arguments-into-event-bindings
       queryResponse.addCallback(callback = lambda x:(self.processGooglePlacesQuery(x, atMsg, upperBound, queryUrl)))
     except Exception, e:
-      logging.error('Internal error: Google API query failed: ' + str(e))
+      logging.error('Error: Google API query failed; or illegal user input: ' + str(e))
   
   # This query is async, meaning that place update could come during this query
   # Number of responses specification, different from Youtube API where a maxResults and next page token is present?
@@ -140,7 +147,7 @@ class ProxyServerProtocol(LineReceiver):
     logging.info("Responded to IAMAT with: " + atMsg + "; and Google Places query: " + queryUrl)
   
   # Routing loop
-  def processAT(self, line):
+  def processAt(self, line):
     components = line.split()
     if len(components) != 7:
       self.commandFailed(line)
@@ -177,8 +184,7 @@ class ProxyServerProtocol(LineReceiver):
 
   def connectionLost(self, reason):
     self.factory.connectionNum = self.factory.connectionNum - 1
-    logging.info("Connection lost. Total: {0}".format(
-      self.factory.connectionNum))
+    logging.info("Connection lost with a client. Remaining: {0}".format(self.factory.connectionNum))
 
 class ProxyServer(protocol.ServerFactory):
   def __init__(self, serverName, serverPort):
@@ -261,6 +267,7 @@ def main():
       reactor.run()
     else:
       print "Error: server name not recognized from configuration"
+      usage()
   except KeyError:
     print "Error: unexpected configuration format"
 
