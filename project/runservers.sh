@@ -1,4 +1,4 @@
-pkill python server.py
+pkill -f "python server.py"
 
 python server.py Alford &
 python server.py Bolden &
