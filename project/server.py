@@ -36,6 +36,7 @@ class ProxyServerProtocol(LineReceiver):
     self.factory = factory
 
   def connectionMade(self):
+    # connectionNum is the total number of connection, including client-this server and server(as client)-this server
     self.factory.connectionNum += 1
     logging.info("Connection established. Total: {0}".format(self.factory.connectionNum))
 
