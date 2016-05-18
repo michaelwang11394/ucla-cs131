@@ -1,0 +1,44 @@
+10 (20 minutes).
+   Write a Scheme procedure (count-pairs-mcguffin OBJ PROC) that recursively
+   searches OBJ for a "McGuffin", namely, a subobject OBJ1 such that OBJ1 is not
+   a pair and (PROC OBJ1) returns true.  If count-pairs-mcguffin finds a
+   McGuffin, it immediately returns OBJ; otherwise, it returns a nonnegative
+   integer that counts the number of pairs that it found in OBJ.  The search
+   should be depth-first, left-to-right.  Only pairs are descended through
+   recursively; you need not worry about other recursive objects like vectors. 
+
+For example:
+
+(count-pairs-mcguffin '(a b c) symbol?)  ===>  a
+(count-pairs-mcguffin '(a b 2) number?)  ===>  2
+(count-pairs-mcguffin '(a b c) number?)  ===>  3
+(count-pairs-mcguffin '(a b c) boolean?) ===>  3
+(count-pairs-mcguffin '(a b c) pair?)    ===>  3
+(count-pairs-mcguffin '(#f a b c) (lambda (x) x)) ===>  a
+(count-pairs-mcguffin '(0.1 b c) symbol?) ===> b
+(count-pairs-mcguffin '((0.1 a) b c) symbol?) ===> a
+
+Your implementation should use a continuation, so that when the McGuffin is 
+found, it can be returned right away.
+
+(see https://en.wikipedia.org/wiki/MacGuffin for what a McGuffin is)
+
+[
+This does not keep track of the numbers you checked…
+Consider writing the entire function, and place call/cc where it needs to be.
+
+define mcGuffin
+  (lambda (ls pred)
+    (call/cc
+      lambda (break) 
+        (let f ([ls ls])
+          (if (pred (car ls)) (break (car ls)) (f (cdr ls))))
+    ))
+]
+
+[
+define cpm
+  (lambda (OBJ PROC)
+    (let ((helper (lambda (o p n)
+      () )))))
+]

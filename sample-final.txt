@@ -1,0 +1,343 @@
+UCLA Computer Science 131 (Spring 2005)
+Section 1 final
+180 points, 180 minutes total
+open book, open notes
+
+
+
+
+Name:_______________________
+
+
+
+
+Student ID:____________________
+
+
+
+----+----+----+----+----+----
+1   |2   |3   |4   |5   |6
+    |    |    |    |    |
+    |    |    |    |    |
+----+----+----+----+----+----
+----+----+----+----+----+----+-----------
+7   |8   |9   |10  |11  |12  |total
+    |    |    |    |    |    |
+    |    |    |    |    |    |
+----+----+----+----+----+----+-----------
+
+1 (5 minutes).  Why is heap fragmentation not a
+problem in a traditional Lisp implementation
+where "cons" is the only heap storage allocation
+primitive?
+
+
+2.  Consider the following OCaml program.  Its
+names have been changed to protect the innocent.
+
+let s x = x + 1
+
+[Int -> Int]
+
+let rec i min max =
+  if max < min then [] else min :: i (s min) max
+
+[Int -> Int -> Int List]
+[Inclusive range of [min, min+1, …, max]]
+
+let rec f p = function
+ | []  -> []
+ | a::r ->
+   let fpr = f p r in if p a then a::fpr else fpr
+
+[(‘a -> Bool) -> ‘a List -> ‘a List]
+[Select all from list that satisfies p]
+
+let x n =
+  f (fun m -> not (m mod n = 0))
+
+(Original thought: Int -> (Int List -> Int List)); In OCaml, -> is right associative, parenthesis is implied
+[Int -> Int List -> Int List]
+
+let t max =
+  let rec f1 = function
+    | [] -> []
+    | n::r ->
+       n :: if max < n*n then r else f1 (x n r)
+  in
+    f1 (i 2 max)
+
+f1: [Int List -> Int List]
+t:  [Int -> Int List]
+[Prime Sieve]
+
+2a (10 minutes).  What are the types of the
+top-level OCaml identifiers s, i, f, x, t?
+
+2b (10 minutes).  What does the expression "t 20"
+evaluate to?  Show your work.
+
+t 20 => (for the list that starts with 2, filter 2k out)
+[2 :: 3, 5, …, 19] => (for the new list 3, 5, …, 19; start with 3, filter 3k out)
+[2 :: 3 :: 5, 7, 11,…, 19] => (… filter 5k out)
+[2 :: 3 :: 5 :: 7 :: 11 :: 13 :: 17 :: 19] (Prime Sieve)
+
+3 (15 minutes).  The paper "The Twisted Network
+Framework" gives the following as one of the
+disadvantages of Twisted.
+
+   As each callback must be finished as soon as
+   possible, it is not possible to keep
+   persistent state in function-local variables.
+
+What does this remark mean?  Give an example of
+why it might be nice to keep persistent state in
+a function-local variable, and describe what
+would happen to a Twisted server if you tried to
+do that.
+
+[]
+
+4 (15 minutes).  Consider the following argument:
+
+   The programmers of the world are still using
+   the first major imperative language (Fortran),
+   the first major functional language (Lisp),
+   and the first major logic-programming language
+   (Prolog), but they no longer use the first
+   major object-oriented language (Simula 67).
+   That is because object-oriented languages are
+   fundamentally different.  Here's why:
+
+If you agree with this argument, finish it by
+adding some justifications and examples.  If not,
+argue the contrary.
+
+
+5.  Consider the static-scoping semantics given
+in pages 512-513 of Webber.
+
+5a (10 minutes).  Can these semantics be
+implemented easily on a machine in which all
+storage is allocated on the stack, or do they
+assume the existence of a heap?  If the former,
+give a nontrivial example and show why the heap
+is not needed for it; if the latter, give an
+example of why a heap is necessary.
+
+5b (10 minutes).  This question is the same as
+(a), except use the dynamic-scoping semantics.
+
+
+6 (15 minutes).  Generally speaking, languages
+that use call-by-name or call-by-need
+parameter-passing conventions avoid hangs and/or
+crashes that would occur if the same program were
+evaluated using call-by-value.  Can you think of
+any counterexamples?  That is, can you think of a
+program that has well-defined behavior with
+call-by-value, but which hangs with call-by-name
+or call-by-need?  If so, give a counterexample;
+if not, explain why it's not possible to give a
+counterexample.
+
+7.  Write implementations of the following Prolog
+predicates.  Use a clear and simple style.  Do
+not assume that the input arguments are ground
+terms.  You may assume the standard Prolog
+predicates like member/2 and append/3, but avoid
+them in favor of unification if you can.  Define
+auxiliary predicates as needed.
+
+7a (5 minutes).  shift_left(L, R) succeeds if R
+is the result of "shifting left" the list L by 1.
+The leading element of L is lost.  For example,
+shift_left([a,b,c], [b,c]).
+
+[
+shift_left([], []).
+shift_left([H|T], T). 
+(Using H as well as _ would work)
+]
+
+7b (5 minutes).  shift_right(L, R) is similar,
+except it shifts right.  For example,
+shift_right([a,b,c], [a,b]).
+
+[
+shift_right([H], []).
+shift_right([H|T], [H|T1]) :- shift_right(T, T1).
+]
+/* what about given empty list…interesting */
+
+7c (5 minutes).  shift_left_circular(L, R) is
+like shift_left, except the leading element of L
+is reintroduced at the right.  For example,
+shift_left_circular([a,b,c], [b,c,a]).
+
+[
+this one is wrong…
+last_elem([H], H). 
+last_elem([H|T], Y) :- last_elem([T], Y).
+shift_left_circular([], []).
+shift_left_circular(L, R) :- shift_left(L, R1), last_elem(L, L1), append(R1, L1, R)
+]
+
+[
+easier:
+shift_left_circular([H|T], X) :- append(T, [H], X)
+]
+
+[
+avoid using append, by writing your own append…official answer…if question says ‘avoid if possible’, ignore it.
+]
+
+7d (5 minutes).  shift_right_circular(L, R) is
+similar, except it shifts right.  For example,
+shift_right_circular([a,b,c], [c,a,b]).
+
+[
+shift_right_circular([], []).
+shift_right_circular([H|T], [X|R1]) :- shift_right(L, R1), last_elem([H|T], X).
+]
+
+[
+easier:
+shift_right_circular(L, R) :- shift_left_circular(R, L).
+]
+
+7e (5 minutes).  Which of your implementation of
+the predicates (a)-(d) might be nondeterministic?
+For each such predicate, give an example call
+that succeeds more than once.
+
+[]
+
+8 (10 minutes).  What is the set of possible
+behaviors for each of the following Scheme
+top-level expressions?  Assume that each one is
+typed in to a fresh instance of a Scheme
+interpreter.  Justify any tricky or obscure parts
+of your answers by citing particular parts of the
+formal semantics of Scheme.
+
+(not (if #f #f))
+(car (begin (set! car cdr) (list car cdr)))
+
+
+9 (5 minutes).  The abstract syntax for Scheme in
+R5RS section 7.2.1 lists only constants,
+identifiers, procedure calls, lambda, if, and
+set!.  The following expressions aren't any of
+these things, so why are they valid expressions
+in Scheme?  Or if they're not valid expressions,
+say why not.
+
+(let ((a '())) a)
+(cond ((eq? '() '()) 1) (#t 0))
+(1)
+
+10 (20 minutes).  Consider the following Java
+code snippet, taken from BioJava.  Translate it
+as best you can into idiomatic Python.  For parts
+that you cannot easily translate, say what the
+problems are, and how you'd go about addressing
+these problems if you actually had to translate
+all of BioJava into Python.
+package org.biojava.bio.program.ensembl;
+import java.util.*;
+import java.lang.ref.*;
+import org.biojava.bio.*;
+...
+class CloneDB extends ImmutableSequenceDBBase
+       implements SequenceDB {
+  private Ensembl ensembl;
+
+  private Map cloneCache;
+  private Set ids_cache;
+
+  { cloneCache = new HashMap(); }
+
+  public CloneDB(Ensembl db) {
+      this.ensembl = db;
+  }
+
+  public String getName() {
+      return "http://www.ensembl.org/";
+  }
+
+  Sequence getCloneSequence(Clone cont)
+      throws EnsemblException
+  {
+    Sequence seq = (Sequence)
+      cloneCache.get(cont.getID());
+    if (seq == null) {
+      if (ensembl.getUseHeavyClones()) {
+	seq = new EnsemblHeavyCloneSequence
+          (cont, ensembl);
+      } else {
+	seq = new EnsemblCloneSequence
+          (cont, ensembl);
+      }
+      cloneCache.put(cont.getID(), seq);
+    }
+    return seq;
+  }
+  ...
+}
+
+
+
+
+
+11 (15 minutes).  For each of the following
+seemingly-arbitrary language rules, explain what
+performance gains (if any) arise because of the
+rules.  Analyze both time and space performance.
+List the rules roughly in decreasing order of
+importance, performance-wise.
+
+  * Arrays are origin-zero, not origin 1.
+
+  * Arrays must be allocated statically or on the
+    stack; they cannot be allocated on the heap.
+
+  * Each object in an array must have the same
+    size.
+
+  * Subscript violations result in undefined
+    behavior; an exception may or may not be
+    raised.
+
+  * The array must have just one dimension.
+
+  * The number of elements in an array is fixed
+    at compile-time.
+
+  * Arrays must always be accessed directly;
+    there are no pointers to arrays, and arrays
+    cannot be passed by reference to procedures.
+
+
+12 (15 minutes).  Suppose we add a new statement
+"return[N]EXPR;" to our C implementation, as an
+extension to C.  N must be an integer constant
+expression with a nonnegative value, and EXPR can
+be any valid C expression.  This new statement
+acts like "return EXPR;", except that it causes
+the Nth caller of the current function to return
+with the value of the expression EXPR.  For
+example, suppose F calls G which calls H, and
+suppose H then executes "return[2]5;".  This
+causes F to return immediately, with the value 5;
+G and H are silently exited in the process.  By
+definition, "return[0]EXPR;" is equivalent to
+"return EXPR;".
+
+What problems do you see in implementing
+"return[N]EXPR;"?  Are these problems inherent to
+C, or can they be worked around by changing the
+semantics of the new statement slightly?  Would
+it be easier to implement this new statement in
+some of the other languages that we have studied?
+If so, which ones and why?  If not, why not?
